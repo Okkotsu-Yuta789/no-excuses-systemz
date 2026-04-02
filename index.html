@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIT PLAN — Weekly Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Sarabun:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --card: #16161f;
+  --border: #1e1e2e;
+  --accent: #e8ff47;
+  --accent2: #ff6b35;
+  --muted: #3a3a50;
+  --text: #e8e8f0;
+  --text-dim: #6b6b85;
+  --push: #ff6b35;
+  --pull: #47c5ff;
+  --cardio: #a855f7;
+  --rest: #22d3a5;
+  --danger: #ff4747;
+  --success: #22d3a5;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Sarabun', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(232,255,71,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232,255,71,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events:none; z-index:0;
+}
+
+/* HEADER */
+header {
+  position:relative; z-index:10;
+  padding: 28px 36px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.header-top {
+  display:flex; align-items:flex-start;
+  justify-content:space-between; gap:16px; flex-wrap:wrap;
+}
+.logo {
+  font-family:'Bebas Neue',sans-serif;
+  font-size: clamp(40px,6vw,76px);
+  letter-spacing:4px; line-height:0.85;
+  color:var(--accent);
+  text-shadow:0 0 50px rgba(232,255,71,0.25);
+}
+.logo span {
+  display:block; font-size:0.3em; letter-spacing:10px;
+  color:var(--text-dim); font-family:'Space Mono',monospace; margin-bottom:4px;
+}
+.rules-bar {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:10px; padding:12px 16px;
+  display:flex; flex-direction:column; gap:5px;
+}
+.rules-bar h3 {
+  font-family:'Space Mono',monospace; font-size:9px;
+  letter-spacing:3px; color:var(--text-dim); margin-bottom:3px;
+}
+.rule-item { display:flex; align-items:center; gap:8px; font-size:13px; }
+.rule-time { font-family:'Space Mono',monospace; color:var(--accent); font-size:12px; }
+
+/* STATS BAR */
+.stats-bar {
+  margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; align-items:stretch;
+}
+.stat-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:10px; padding:10px 14px;
+  display:flex; flex-direction:column; gap:3px;
+  flex:1; min-width:110px;
+}
+.stat-label {
+  font-family:'Space Mono',monospace; font-size:9px;
+  letter-spacing:2px; color:var(--text-dim); text-transform:uppercase;
+}
+.stat-input {
+  background:transparent; border:none;
+  border-bottom:1px solid var(--muted);
+  color:var(--accent); font-family:'Space Mono',monospace;
+  font-size:20px; font-weight:700; width:100%;
+  padding:2px 0; outline:none; transition:border-color 0.2s;
+}
+.stat-input:focus { border-color:var(--accent); }
+.stat-input::placeholder { color:var(--muted); font-size:14px; }
+.stat-unit { font-family:'Space Mono',monospace; font-size:10px; color:var(--text-dim); }
+.streak-display {
+  font-family:'Bebas Neue',sans-serif; font-size:30px;
+  color:var(--accent2); line-height:1;
+}
+.reset-btn {
+  background:rgba(255,71,71,0.08); border:1px solid rgba(255,71,71,0.25);
+  border-radius:10px; padding:10px 18px;
+  color:var(--danger); font-family:'Space Mono',monospace;
+  font-size:10px; letter-spacing:2px; cursor:pointer;
+  transition:all 0.2s; display:flex; align-items:center;
+  gap:6px; white-space:nowrap; align-self:stretch;
+}
+.reset-btn:hover { background:rgba(255,71,71,0.18); border-color:var(--danger); }
+
+/* PENALTY BANNER */
+.penalty-banner {
+  display:none;
+  margin:12px 36px 0;
+  padding:10px 16px;
+  background:rgba(255,71,71,0.08);
+  border:1px solid rgba(255,71,71,0.25);
+  border-radius:10px;
+  font-size:13px; color:#ff9090;
+  position:relative; z-index:10;
+}
+.penalty-banner.show { display:flex; align-items:center; gap:10px; }
+.penalty-banner strong { color:var(--danger); font-family:'Space Mono',monospace; }
+
+/* NAV TABS */
+.nav-wrapper {
+  position:relative; z-index:10;
+  padding:18px 36px 0;
+  display:flex; gap:4px;
+  overflow-x:auto; scrollbar-width:none;
+}
+.nav-wrapper::-webkit-scrollbar { display:none; }
+.day-tab {
+  flex-shrink:0; cursor:pointer;
+  padding:10px 16px;
+  border-radius:10px 10px 0 0;
+  border:1px solid transparent; border-bottom:none;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:15px; letter-spacing:2px;
+  color:var(--text-dim); background:transparent;
+  transition:all 0.2s; text-align:center; min-width:72px;
+}
+.day-tab .day-label {
+  font-family:'Space Mono',monospace;
+  font-size:9px; letter-spacing:1px; display:block; margin-bottom:2px;
+}
+.day-tab:hover { color:var(--text); background:var(--surface); }
+.day-tab.active { color:var(--accent); background:var(--card); border-color:var(--border); }
+
+/* mini ring */
+.tab-ring { width:26px; height:26px; margin:4px auto 0; position:relative; }
+.tab-ring svg { transform:rotate(-90deg); }
+.tab-ring .rbg { fill:none; stroke:var(--muted); stroke-width:2.5; }
+.tab-ring .rfill { fill:none; stroke-width:2.5; stroke-linecap:round; transition:stroke-dashoffset 0.4s ease; }
+.tab-ring-txt {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Space Mono',monospace; font-size:6px; color:var(--text-dim);
+}
+.day-tab.active .tab-ring-txt { color:var(--text); }
+
+/* MAIN */
+main {
+  position:relative; z-index:10;
+  padding:0 36px 60px;
+  background:var(--card);
+  border:1px solid var(--border); border-top:none;
+  margin:0 36px;
+  border-radius:0 16px 16px 16px;
+}
+.day-panel { display:none; padding:24px 0; }
+.day-panel.active { display:block; animation:fadeUp 0.3s ease both; }
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* DAY HEADER */
+.day-header {
+  display:flex; align-items:flex-start;
+  justify-content:space-between; margin-bottom:20px;
+  padding-bottom:18px; border-bottom:1px solid var(--border);
+  flex-wrap:wrap; gap:14px;
+}
+.day-title {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(34px,5vw,60px); letter-spacing:4px; line-height:1;
+}
+.day-number {
+  font-family:'Space Mono',monospace; font-size:10px;
+  letter-spacing:4px; color:var(--text-dim); margin-bottom:4px;
+}
+.day-type-badge {
+  display:inline-block; padding:3px 11px; border-radius:999px;
+  font-family:'Space Mono',monospace; font-size:10px;
+  letter-spacing:2px; margin-top:5px; font-weight:700;
+}
+.day-progress-wrap { text-align:right; }
+.day-progress-label {
+  font-family:'Space Mono',monospace; font-size:9px;
+  color:var(--text-dim); letter-spacing:2px; margin-bottom:4px;
+}
+.day-progress-pct {
+  font-family:'Bebas Neue',sans-serif; font-size:38px;
+  line-height:1; color:var(--accent);
+}
+.day-progress-bar-track {
+  width:110px; height:3px; background:var(--border);
+  border-radius:999px; margin-top:5px; overflow:hidden; margin-left:auto;
+}
+.day-progress-bar-fill {
+  height:100%; background:var(--accent);
+  border-radius:999px; transition:width 0.4s ease;
+}
+.day-complete-badge {
+  display:none; margin-top:6px;
+  font-family:'Space Mono',monospace; font-size:9px;
+  letter-spacing:2px; color:var(--success);
+}
+.day-complete-badge.show { display:block; }
+
+/* GRID */
+.content-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:18px;
+}
+
+/* SECTION CARDS */
+.section-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; overflow:hidden;
+}
+.section-header {
+  padding:11px 16px; display:flex; align-items:center;
+  justify-content:space-between; border-bottom:1px solid var(--border);
+}
+.section-header-left { display:flex; align-items:center; gap:7px; }
+.section-icon { font-size:15px; }
+.section-title {
+  font-family:'Space Mono',monospace; font-size:10px;
+  letter-spacing:3px; text-transform:uppercase; font-weight:700;
+}
+.section-progress {
+  font-family:'Space Mono',monospace; font-size:10px;
+  color:var(--text-dim); background:var(--card);
+  padding:2px 7px; border-radius:4px;
+}
+.section-body { padding:14px 16px; }
+
+/* CHECKBOXES */
+.check-row {
+  display:flex; align-items:flex-start; gap:9px;
+  padding:8px 6px; border-bottom:1px solid rgba(255,255,255,0.04);
+  cursor:pointer; transition:background 0.15s; border-radius:6px;
+}
+.check-row:last-child { border-bottom:none; }
+.check-row:hover { background:rgba(255,255,255,0.025); }
+.custom-checkbox {
+  width:17px; height:17px; flex-shrink:0;
+  border:1.5px solid var(--muted); border-radius:4px;
+  margin-top:2px; display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s; background:transparent;
+}
+.check-row.checked .custom-checkbox { background:var(--accent); border-color:var(--accent); }
+.custom-checkbox svg { opacity:0; transition:opacity 0.15s; }
+.check-row.checked .custom-checkbox svg { opacity:1; }
+.check-label {
+  flex:1; font-size:14px; color:var(--text);
+  transition:color 0.2s,opacity 0.2s; line-height:1.4;
+}
+.check-row.checked .check-label { color:var(--text-dim); text-decoration:line-through; opacity:0.55; }
+.check-detail {
+  font-family:'Space Mono',monospace; font-size:10px;
+  color:var(--text-dim); margin-top:2px;
+}
+.ex-badge {
+  flex-shrink:0; padding:3px 8px; border-radius:5px;
+  font-family:'Space Mono',monospace; font-size:10px;
+  font-weight:700; align-self:center; white-space:nowrap;
+}
+
+/* MEAL TIME */
+.meal-time-label {
+  font-family:'Space Mono',monospace; font-size:11px;
+  color:var(--accent); font-weight:700;
+  padding:8px 0 4px;
+  display:flex; align-items:center; gap:8px;
+}
+.meal-time-label::after { content:''; flex:1; height:1px; background:var(--border); }
+.meal-note {
+  font-size:12px; color:var(--text-dim); margin-top:10px;
+  padding:7px 11px;
+  background:rgba(255,107,53,0.07);
+  border-left:2px solid var(--accent2);
+  border-radius:0 6px 6px 0;
+}
+
+/* WALK */
+.walk-wrap {
+  margin-top:12px; padding:9px 12px;
+  background:rgba(232,255,71,0.05);
+  border:1px solid rgba(232,255,71,0.1);
+  border-radius:8px;
+}
+.walk-inner {
+  display:flex; align-items:center; gap:9px;
+  cursor:pointer; width:100%;
+}
+.walk-time {
+  font-family:'Space Mono',monospace; color:var(--accent);
+  font-weight:700; font-size:13px; margin-left:auto;
+}
+.walk-inner .check-label { font-size:14px; }
+.walk-inner.checked .check-label { color:var(--text-dim); text-decoration:line-through; opacity:0.55; }
+.walk-inner.checked .custom-checkbox { background:var(--accent); border-color:var(--accent); }
+.walk-inner.checked .custom-checkbox svg { opacity:1; }
+
+/* PENALTY CARD */
+.penalty-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:14px 16px; margin-top:18px;
+}
+.penalty-header {
+  font-family:'Space Mono',monospace; font-size:9px;
+  letter-spacing:3px; color:var(--danger); margin-bottom:8px;
+}
+.penalty-rule {
+  display:flex; align-items:flex-start; gap:9px;
+  padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:13px;
+}
+.penalty-rule:last-child { border-bottom:none; }
+.penalty-icon { font-size:13px; flex-shrink:0; }
+
+/* CYCLE NOTE */
+.cycle-note {
+  text-align:center; padding:16px;
+  font-family:'Space Mono',monospace; font-size:10px;
+  color:var(--text-dim); letter-spacing:2px;
+  border-top:1px solid var(--border); margin-top:20px;
+}
+.cycle-note span { color:var(--accent); }
+
+/* TYPE COLORS */
+.type-push { color:var(--push); }
+.type-pull { color:var(--pull); }
+.type-cardio { color:var(--cardio); }
+.type-rest { color:var(--rest); }
+.badge-push { background:rgba(255,107,53,0.15); color:var(--push); }
+.badge-pull { background:rgba(71,197,255,0.15); color:var(--pull); }
+.badge-cardio { background:rgba(168,85,247,0.15); color:var(--cardio); }
+.badge-rest { background:rgba(34,211,165,0.15); color:var(--rest); }
+
+/* MODAL */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.75);
+  z-index:999; align-items:center; justify-content:center;
+}
+.modal-overlay.show { display:flex; }
+.modal {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:30px; max-width:340px; width:90%; text-align:center;
+}
+.modal h2 {
+  font-family:'Bebas Neue',sans-serif; font-size:30px;
+  color:var(--danger); letter-spacing:4px; margin-bottom:10px;
+}
+.modal p { font-size:13px; color:var(--text-dim); margin-bottom:22px; line-height:1.7; }
+.modal-btns { display:flex; gap:10px; }
+.btn-cancel {
+  flex:1; padding:11px; border-radius:8px;
+  border:1px solid var(--border); background:var(--surface);
+  color:var(--text); font-family:'Space Mono',monospace;
+  font-size:11px; cursor:pointer; transition:all 0.2s;
+}
+.btn-cancel:hover { border-color:var(--text-dim); }
+.btn-confirm {
+  flex:1; padding:11px; border-radius:8px;
+  border:1px solid var(--danger);
+  background:rgba(255,71,71,0.15); color:var(--danger);
+  font-family:'Space Mono',monospace; font-size:11px;
+  cursor:pointer; font-weight:700; transition:all 0.2s; letter-spacing:1px;
+}
+.btn-confirm:hover { background:rgba(255,71,71,0.28); }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:20px; right:20px;
+  background:var(--card); border:1px solid var(--accent);
+  color:var(--accent); font-family:'Space Mono',monospace;
+  font-size:10px; letter-spacing:2px; padding:9px 14px;
+  border-radius:8px; z-index:999; opacity:0;
+  transform:translateY(8px); transition:all 0.25s; pointer-events:none;
+}
+.toast.show { opacity:1; transform:translateY(0); }
+
+/* RESPONSIVE */
+@media (max-width:700px) {
+  header { padding:20px 14px 16px; }
+  main { margin:0 10px; padding:0 14px 40px; }
+  .nav-wrapper { padding:12px 10px 0; }
+  .penalty-banner { margin:10px 10px 0; }
+  .content-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal">
+    <h2>⚠ RESET?</h2>
+    <p>ล้างการติ๊กทั้งหมดและ streak<br>Stats (น้ำหนัก/push-up max) ยังคงอยู่</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeReset()">ยกเลิก</button>
+      <button class="btn-confirm" onclick="confirmReset()">RESET WEEK</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">💾 SAVED</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-top">
+    <div class="logo"><span>WEEKLY</span>FIT PLAN</div>
+    <div class="rules-bar">
+      <h3>กติกาหลัก</h3>
+      <div class="rule-item">⏰ กิน: <span class="rule-time">10:00 / 14:00 / 17:30</span></div>
+      <div class="rule-item">❌ หลัง <span class="rule-time">18:00</span> = งดทุกอย่าง</div>
+      <div class="rule-item">💧 น้ำ <span class="rule-time">2–3 ลิตร/วัน</span></div>
+    </div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-label">⚖️ น้ำหนัก</div>
+      <input class="stat-input" id="statWeight" type="number" placeholder="—" step="0.1">
+      <div class="stat-unit">kg</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">💪 Push-up max</div>
+      <input class="stat-input" id="statPushup" type="number" placeholder="—">
+      <div class="stat-unit">ครั้ง</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">🔥 Day streak</div>
+      <div class="streak-display" id="streakDisplay">0</div>
+      <div class="stat-unit">วัน</div>
+    </div>
+    <button class="reset-btn" onclick="openReset()">🔁 RESET<br>WEEK</button>
+  </div>
+</header>
+
+<div class="penalty-banner" id="penaltyBanner">
+  <span>💣</span><span id="penaltyText"></span>
+</div>
+
+<div class="nav-wrapper" id="navTabs"></div>
+<main id="mainContent"></main>
+
+<script>
+// ════════════════════════════════════
+//  D A T A
+// ════════════════════════════════════
+const days = [
+  {
+    id:1,label:'MON',name:'DAY 1',title:'PUSH',subtitle:'อก / แขน',type:'push',
+    meals:{'10:00':['ข้าว 1 ทัพพี','ไข่ 2 ฟอง','อกไก่ 1 ชิ้น','ผัก'],'14:00':['ไข่ต้ม 2 ฟอง'],'17:30':['ข้าว 0.5–1 ทัพพี','ไก่/หมูไม่มัน','ผัก']},
+    mealNote:null,
+    exercises:[{name:'Push-up',sets:'4 เซ็ต',detail:'12 / 10 / 8 / 6 ครั้ง'},{name:'Knee push-up',sets:'2 เซ็ต',detail:'× 12 ครั้ง'},{name:'Incline push-up',sets:'2 เซ็ต',detail:'× 10 ครั้ง'},{name:'Plank',sets:'3 เซ็ต',detail:'× 40 วิ'}],
+    walk:'20 นาที',
+  },
+  {
+    id:2,label:'TUE',name:'DAY 2',title:'PULL',subtitle:'หลัง',type:'pull',
+    meals:{'10:00':['ข้าว 1 ทัพพี','ไข่ 2 ฟอง','อกไก่ 1 ชิ้น','ผัก'],'14:00':['ไข่ต้ม 2 ฟอง'],'17:30':['ข้าว 0.5–1 ทัพพี','ไก่/หมูไม่มัน','ผัก']},
+    mealNote:'เหมือน DAY 1',
+    exercises:[{name:'Hanging',sets:'4 เซ็ต',detail:'ค้างให้นานสุด'},{name:'Scapular pull',sets:'4 เซ็ต',detail:'× 10 ครั้ง'},{name:'Negative pull-up',sets:'3 เซ็ต',detail:'× 5 ครั้ง'}],
+    walk:'25 นาที',
+  },
+  {
+    id:3,label:'WED',name:'DAY 3',title:'CARDIO',subtitle:'+ Core',type:'cardio',
+    meals:{'10:00':['ข้าว 0.5 ทัพพี','ไข่ 2 ฟอง','อกไก่ 1 ชิ้น','ผัก'],'14:00':['ไข่ต้ม 2 ฟอง'],'17:30':['ข้าว 0.5 ทัพพี','ไก่/หมูไม่มัน','ผัก']},
+    mealNote:'ลดข้าวเหลือ 0.5 ทัพพีทุกมื้อ',
+    exercises:[{name:'เดินเร็ว',sets:'40 นาที',detail:'Cardio หลัก'},{name:'Plank',sets:'3 เซ็ต',detail:'× 45 วิ'},{name:'Leg raise',sets:'3 เซ็ต',detail:'× 10 ครั้ง'}],
+    walk:null,
+  },
+  {
+    id:4,label:'THU',name:'DAY 4',title:'PUSH',subtitle:'หนัก',type:'push',
+    meals:{'10:00':['ข้าว 1 ทัพพี','ไข่ 2 ฟอง','อกไก่ 1 ชิ้น','ผัก'],'14:00':['ไข่ต้ม 2 ฟอง'],'17:30':['ข้าว 0.5–1 ทัพพี','ไก่/หมูไม่มัน','ผัก']},
+    mealNote:'เหมือน DAY 1',
+    exercises:[{name:'Push-up',sets:'5 เซ็ต',detail:'เพิ่มจาก DAY 1'},{name:'Incline push-up',sets:'3 เซ็ต',detail:'× 12 ครั้ง'},{name:'Knee push-up',sets:'2 เซ็ต',detail:'× 15 ครั้ง'},{name:'Plank',sets:'3 เซ็ต',detail:'× 50 วิ'}],
+    walk:'20 นาที',
+  },
+  {
+    id:5,label:'FRI',name:'DAY 5',title:'PULL',subtitle:'หนักขึ้น',type:'pull',
+    meals:{'10:00':['ข้าว 1 ทัพพี','ไข่ 2 ฟอง','อกไก่ 1 ชิ้น','ผัก'],'14:00':['ไข่ต้ม 2 ฟอง'],'17:30':['ข้าว 0.5–1 ทัพพี','ไก่/หมูไม่มัน','ผัก']},
+    mealNote:'เหมือน DAY 1',
+    exercises:[{name:'Hanging',sets:'5 เซ็ต',detail:'ค้างให้นานสุด'},{name:'Scapular pull',sets:'4 เซ็ต',detail:'× 12 ครั้ง'},{name:'Negative pull-up',sets:'3 เซ็ต',detail:'× 6 ครั้ง'}],
+    walk:'25 นาที',
+  },
+  {
+    id:6,label:'SAT',name:'DAY 6',title:'FAT BURN',subtitle:'เผาผลาญ',type:'cardio',
+    meals:{'10:00':['ข้าว ≤1 ทัพพีรวมทั้งวัน','ไข่ 2 ฟอง','อกไก่ 1 ชิ้น','ผัก'],'14:00':['ไข่ต้ม 2 ฟอง'],'17:30':['ไก่/หมูไม่มัน','ผัก']},
+    mealNote:'ข้าวรวมทั้งวันไม่เกิน 1 ทัพพี',
+    exercises:[{name:'เดิน',sets:'60 นาที',detail:'หรือเล่นบาสแทนได้'},{name:'Plank',sets:'3 เซ็ต',detail:'× 1 นาที'}],
+    walk:null,
+  },
+  {
+    id:7,label:'SUN',name:'DAY 7',title:'REST',subtitle:'+ Reset',type:'rest',
+    meals:{'10:00':['ข้าว 1 ทัพพี','ไข่ 2 ฟอง','อกไก่ 1 ชิ้น','ผัก'],'14:00':['ไข่ต้ม 2 ฟอง'],'17:30':['ข้าว 0.5–1 ทัพพี','ไก่/หมูไม่มัน','ผัก']},
+    mealNote:'กินปกติ เหมือน DAY 1',
+    exercises:[{name:'เดินเบา ๆ',sets:'15 นาที',detail:'ผ่อนคลาย ไม่ต้องรีบ'}],
+    walk:null, isRest:true,
+  },
+];
+
+const PENALTIES = [
+  {icon:'💪',cond:'ไม่ทำ exercise ครบ',result:'พรุ่งนี้เพิ่ม push-up +5 ครั้ง'},
+  {icon:'🍚',cond:'กินเกิน / ผิดมื้อ',result:'วันถัดไปลดข้าวลง 0.5 ทัพพี'},
+];
+
+// ════════════════════════════════════
+//  S T O R A G E
+// ════════════════════════════════════
+const LS = 'fitplan_v3';
+let D = (() => { try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch { return {}; } })();
+
+function save() {
+  try { localStorage.setItem(LS, JSON.stringify(D)); showToast(); } catch(e) {}
+}
+
+function getChecks(i) {
+  if (!D.checks) D.checks = {};
+  if (!D.checks[i]) D.checks[i] = {};
+  return D.checks[i];
+}
+
+// ════════════════════════════════════
+//  P R O G R E S S
+// ════════════════════════════════════
+function totalItems(i) {
+  const d = days[i];
+  return Object.values(d.meals).reduce((a,b)=>a+b.length,0) + d.exercises.length + (d.walk?1:0);
+}
+function checkedCount(i) {
+  return Object.values(getChecks(i)).filter(Boolean).length;
+}
+function pctOf(i) {
+  const t = totalItems(i); if(!t) return 0;
+  return Math.round(checkedCount(i)/t*100);
+}
+
+// ════════════════════════════════════
+//  S T R E A K
+// ════════════════════════════════════
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function yesterdayStr() { const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); }
+
+function tryUpdateStreak(idx) {
+  if (!D.streak) D.streak = {count:0,lastDate:''};
+  if (D.streak.lastDate === todayStr()) return;
+  if (checkedCount(idx) >= totalItems(idx) && totalItems(idx)>0) {
+    D.streak.count = (D.streak.lastDate===yesterdayStr()||D.streak.count===0) ? D.streak.count+1 : 1;
+    D.streak.lastDate = todayStr();
+    save();
+    document.getElementById('streakDisplay').textContent = D.streak.count;
+  }
+}
+
+// ════════════════════════════════════
+//  P E N A L T Y  B A N N E R
+// ════════════════════════════════════
+function renderPenalty(todayIdx) {
+  const banner = document.getElementById('penaltyBanner');
+  const txt = document.getElementById('penaltyText');
+  if (todayIdx===0) { banner.classList.remove('show'); return; }
+
+  const prev = days[todayIdx-1];
+  const pc = getChecks(todayIdx-1);
+  const exTotal = prev.exercises.length+(prev.walk?1:0);
+  let exDone=0;
+  prev.exercises.forEach((_,i)=>{ if(pc[`ex_${i}`]) exDone++; });
+  if(prev.walk&&pc['walk']) exDone++;
+
+  const mTotal = Object.values(prev.meals).reduce((a,b)=>a+b.length,0);
+  let mDone=0;
+  Object.entries(prev.meals).forEach(([t,items])=>items.forEach((_,i)=>{ if(pc[`meal_${t}_${i}`]) mDone++; }));
+
+  const p = [];
+  if(exDone<exTotal) p.push('💪 exercise ไม่ครบ → เพิ่ม push-up +5 วันนี้');
+  if(mDone<mTotal)   p.push('🍚 กินไม่ตาม plan → ลดข้าว 0.5 ทัพพีวันนี้');
+
+  if(p.length) {
+    txt.innerHTML = `<strong>PENALTY จาก ${prev.name}:</strong>&nbsp; ${p.join('&nbsp;|&nbsp;')}`;
+    banner.classList.add('show');
+  } else { banner.classList.remove('show'); }
+}
+
+// ════════════════════════════════════
+//  C H E C K S V G
+// ════════════════════════════════════
+const CKSVG = `<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#0a0a0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const C = 2*Math.PI*10;
+
+// ════════════════════════════════════
+//  B U I L D  T A B S
+// ════════════════════════════════════
+const navEl = document.getElementById('navTabs');
+const mainEl = document.getElementById('mainContent');
+
+const TYPE_COLOR = {push:'#ff6b35',pull:'#47c5ff',cardio:'#a855f7',rest:'#22d3a5'};
+
+function buildTabs() {
+  navEl.innerHTML='';
+  days.forEach((day,i)=>{
+    const pct=pctOf(i);
+    const off = C-(pct/100)*C;
+    const color = TYPE_COLOR[day.type]||'#e8ff47';
+    const tab = document.createElement('div');
+    tab.className='day-tab'; tab.dataset.index=i;
+    tab.innerHTML=`
+      <span class="day-label">${day.label}</span>${day.name}
+      <div class="tab-ring" id="tr_${i}">
+        <svg width="26" height="26" viewBox="0 0 26 26">
+          <circle class="rbg" cx="13" cy="13" r="10"/>
+          <circle class="rfill" cx="13" cy="13" r="10"
+            stroke="${color}" stroke-dasharray="${C}" stroke-dashoffset="${off}"/>
+        </svg>
+        <div class="tab-ring-txt">${pct}%</div>
+      </div>`;
+    tab.addEventListener('click',()=>switchDay(i));
+    navEl.appendChild(tab);
+  });
+}
+
+function refreshTabRing(i) {
+  const pct=pctOf(i);
+  const off=C-(pct/100)*C;
+  const ring=document.getElementById(`tr_${i}`);
+  if(!ring) return;
+  ring.querySelector('.rfill').style.strokeDashoffset=off;
+  ring.querySelector('.tab-ring-txt').textContent=pct+'%';
+}
+
+// ════════════════════════════════════
+//  B U I L D  P A N E L S
+// ════════════════════════════════════
+function mealSectionHTML(day,i) {
+  const checks=getChecks(i);
+  const mTotal=Object.values(day.meals).reduce((a,b)=>a+b.length,0);
+  let mDone=0;
+  Object.entries(day.meals).forEach(([t,items])=>items.forEach((_,j)=>{ if(checks[`meal_${t}_${j}`]) mDone++; }));
+
+  let body='';
+  Object.entries(day.meals).forEach(([time,items])=>{
+    body+=`<div class="meal-time-label">${time}</div>`;
+    items.forEach((item,j)=>{
+      const key=`meal_${time}_${j}`;
+      const ck=!!checks[key];
+      body+=`<div class="check-row ${ck?'checked':''}" data-key="${key}" data-day="${i}" onclick="toggle(this)">
+        <div class="custom-checkbox">${CKSVG}</div>
+        <div class="check-label">${item}</div>
+      </div>`;
+    });
+  });
+  if(day.mealNote) body+=`<div class="meal-note">⚠️ ${day.mealNote}</div>`;
+
+  return `<div class="section-card">
+    <div class="section-header">
+      <div class="section-header-left"><span class="section-icon">🍽️</span>
+        <span class="section-title" style="color:var(--accent2)">อาหาร</span></div>
+      <div class="section-progress" id="mp_${i}">${mDone}/${mTotal}</div>
+    </div>
+    <div class="section-body">${body}</div>
+  </div>`;
+}
+
+function exSectionHTML(day,i) {
+  const checks=getChecks(i);
+  const exTotal=day.exercises.length+(day.walk?1:0);
+  let exDone=0;
+  day.exercises.forEach((_,j)=>{ if(checks[`ex_${j}`]) exDone++; });
+  if(day.walk&&checks['walk']) exDone++;
+
+  let body='';
+  if(day.isRest) body+='<div style="text-align:center;padding:18px 0;font-size:28px">😴</div>';
+  day.exercises.forEach((ex,j)=>{
+    const key=`ex_${j}`;
+    const ck=!!checks[key];
+    body+=`<div class="check-row ${ck?'checked':''}" data-key="${key}" data-day="${i}" onclick="toggle(this)">
+      <div class="custom-checkbox">${CKSVG}</div>
+      <div style="flex:1">
+        <div class="check-label">${ex.name}</div>
+        <div class="check-detail">${ex.detail}</div>
+      </div>
+      <div class="ex-badge badge-${day.type}">${ex.sets}</div>
+    </div>`;
+  });
+  if(day.walk) {
+    const ck=!!checks['walk'];
+    body+=`<div class="walk-wrap">
+      <div class="walk-inner ${ck?'checked':''}" data-key="walk" data-day="${i}" onclick="toggle(this)">
+        <div class="custom-checkbox">${CKSVG}</div>
+        <div class="check-label">🚶 เดิน</div>
+        <span class="walk-time">${day.walk}</span>
+      </div>
+    </div>`;
+  }
+
+  return `<div class="section-card">
+    <div class="section-header">
+      <div class="section-header-left"><span class="section-icon">🏋️</span>
+        <span class="section-title type-${day.type}">ออกกำลังกาย</span></div>
+      <div class="section-progress" id="ep_${i}">${exDone}/${exTotal}</div>
+    </div>
+    <div class="section-body">${body}</div>
+  </div>`;
+}
+
+function penaltyCardHTML() {
+  return `<div class="penalty-card">
+    <div class="penalty-header">💣 กฎลงโทษ</div>
+    ${PENALTIES.map(p=>`<div class="penalty-rule">
+      <span class="penalty-icon">${p.icon}</span>
+      <div>
+        <div style="font-size:12px;color:var(--text-dim)">ถ้า${p.cond}</div>
+        <div style="font-size:13px;color:#ff9090;margin-top:2px">→ ${p.result}</div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function buildPanels() {
+  mainEl.innerHTML='';
+  days.forEach((day,i)=>{
+    const pct=pctOf(i);
+    const panel=document.createElement('div');
+    panel.className='day-panel'; panel.dataset.index=i;
+    panel.innerHTML=`
+      <div class="day-header">
+        <div>
+          <div class="day-number">${day.name}</div>
+          <div class="day-title type-${day.type}">${day.title}</div>
+          <div class="day-type-badge badge-${day.type}">${day.subtitle}</div>
+        </div>
+        <div class="day-progress-wrap">
+          <div class="day-progress-label">COMPLETE</div>
+          <div class="day-progress-pct" id="dpct_${i}">${pct}%</div>
+          <div class="day-progress-bar-track">
+            <div class="day-progress-bar-fill" id="dbar_${i}" style="width:${pct}%"></div>
+          </div>
+          <div class="day-complete-badge ${pct>=100?'show':''}" id="ddone_${i}">✅ DONE!</div>
+        </div>
+      </div>
+      <div class="content-grid">
+        ${mealSectionHTML(day,i)}
+        ${exSectionHTML(day,i)}
+      </div>
+      ${penaltyCardHTML()}
+      <div class="cycle-note">
+        ${i===6?'🔁 จบ DAY 7 → <span>กลับไป DAY 1 ใหม่</span>':`ถัดไป → <span>DAY ${day.id+1} (${days[i+1].title})</span>`}
+      </div>`;
+    mainEl.appendChild(panel);
+  });
+}
+
+// ════════════════════════════════════
+//  T O G G L E
+// ════════════════════════════════════
+function toggle(el) {
+  const key=el.dataset.key;
+  const idx=parseInt(el.dataset.day);
+  const now=el.classList.toggle('checked');
+  // sync checkbox inside walk-inner
+  const cb=el.querySelector('.custom-checkbox');
+  if(cb) { /* already in el */ }
+  getChecks(idx)[key]=now;
+  D.checks[idx][key]=now;
+  save();
+  refreshProgress(idx);
+  refreshTabRing(idx);
+  tryUpdateStreak(idx);
+}
+
+function refreshProgress(i) {
+  const day=days[i];
+  const checks=getChecks(i);
+  const pct=pctOf(i);
+
+  const pctEl=document.getElementById(`dpct_${i}`);
+  const barEl=document.getElementById(`dbar_${i}`);
+  const doneEl=document.getElementById(`ddone_${i}`);
+  if(pctEl) pctEl.textContent=pct+'%';
+  if(barEl) barEl.style.width=pct+'%';
+  if(doneEl) doneEl.classList.toggle('show',pct>=100);
+
+  const mTotal=Object.values(day.meals).reduce((a,b)=>a+b.length,0);
+  let mDone=0;
+  Object.entries(day.meals).forEach(([t,items])=>items.forEach((_,j)=>{ if(checks[`meal_${t}_${j}`]) mDone++; }));
+  const mpEl=document.getElementById(`mp_${i}`);
+  if(mpEl) mpEl.textContent=`${mDone}/${mTotal}`;
+
+  const exTotal=day.exercises.length+(day.walk?1:0);
+  let exDone=0;
+  day.exercises.forEach((_,j)=>{ if(checks[`ex_${j}`]) exDone++; });
+  if(day.walk&&checks['walk']) exDone++;
+  const epEl=document.getElementById(`ep_${i}`);
+  if(epEl) epEl.textContent=`${exDone}/${exTotal}`;
+}
+
+// ════════════════════════════════════
+//  S W I T C H
+// ════════════════════════════════════
+function switchDay(idx) {
+  document.querySelectorAll('.day-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  document.querySelectorAll('.day-panel').forEach((p,i)=>p.classList.toggle('active',i===idx));
+}
+
+// ════════════════════════════════════
+//  S T A T S
+// ════════════════════════════════════
+function loadStats() {
+  const s=D.stats||{};
+  const w=document.getElementById('statWeight');
+  const p=document.getElementById('statPushup');
+  if(s.weight&&w) w.value=s.weight;
+  if(s.pushup&&p) p.value=s.pushup;
+  if(!D.streak) D.streak={count:0,lastDate:''};
+  document.getElementById('streakDisplay').textContent=D.streak.count;
+}
+document.getElementById('statWeight').addEventListener('change',function(){
+  if(!D.stats) D.stats={}; D.stats.weight=this.value; save();
+});
+document.getElementById('statPushup').addEventListener('change',function(){
+  if(!D.stats) D.stats={}; D.stats.pushup=this.value; save();
+});
+
+// ════════════════════════════════════
+//  R E S E T
+// ════════════════════════════════════
+function openReset() { document.getElementById('resetModal').classList.add('show'); }
+function closeReset() { document.getElementById('resetModal').classList.remove('show'); }
+function confirmReset() {
+  D.checks={}; D.streak={count:0,lastDate:''};
+  save(); closeReset();
+  buildPanels(); buildTabs();
+  const today=(new Date().getDay()+6)%7;
+  switchDay(today);
+  document.getElementById('streakDisplay').textContent='0';
+  renderPenalty(today);
+}
+
+// ════════════════════════════════════
+//  T O A S T
+// ════════════════════════════════════
+let tt;
+function showToast() {
+  const t=document.getElementById('toast');
+  t.classList.add('show'); clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),1400);
+}
+
+// ════════════════════════════════════
+//  I N I T
+// ════════════════════════════════════
+buildTabs();
+buildPanels();
+loadStats();
+
+const todayIdx = (new Date().getDay()+6)%7;
+switchDay(todayIdx);
+document.querySelectorAll('.day-tab')[todayIdx]?.scrollIntoView({inline:'center',behavior:'smooth'});
+renderPenalty(todayIdx);
+</script>
+</body>
+</html>
